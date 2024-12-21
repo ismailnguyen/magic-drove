@@ -67,7 +67,7 @@ const listFoldersRecursive = (folder) => {
 };
 
 /**
- * Match folders based on the provided tags.
+ * Match folders based on the provided tags and sort by match count.
  * @param {string} rootFolder - The root folder to scan.
  * @param {Array} tags - Array of tags to match.
  * @returns {Array} Array of matching folder paths sorted by relevance.
@@ -85,13 +85,14 @@ const matchFoldersByTags = (rootFolder, tags) => {
         return { folderPath: folder.folderPath, matchCount };
     });
 
+    // Filter out folders with no matches
+    const matchedFolders = folderMatches.filter(folder => folder.matchCount > 0);
+
     // Sort folders by match count in descending order
-    folderMatches.sort((a, b) => b.matchCount - a.matchCount);
+    matchedFolders.sort((a, b) => b.matchCount - a.matchCount);
 
-    // Get top matching folders
-    const bestMatches = folderMatches.filter(folder => folder.matchCount > 0).map(folder => folder.folderPath);
-
-    return bestMatches;
+    // Return only the folder paths, ordered by match count
+    return matchedFolders.map(folder => folder.folderPath);
 };
 
 module.exports = {
