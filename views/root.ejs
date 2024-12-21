@@ -13,12 +13,13 @@
             <tr id="file-<%= file.fileName.replace(/\W/g, '_') %>">
                 <td>
                     <span><%= file.fileName %></span>
-                    <!-- Open File Link -->
+                    <!-- Copy File Path to Clipboard -->
                     <a 
-                        href="file://<%= path.join(rootFolder, file.fileName) %>" 
-                        target="_blank" 
+                        href="#" 
+                        class="copy-file-path" 
+                        data-file-path="<%= path.join(rootFolder, file.fileName) %>" 
                         style="margin-left: 10px;">
-                        Open
+                        Copy File Path to Clipboard
                     </a>
                     <!-- Edit File Name Link -->
                     <a 
@@ -56,6 +57,22 @@
 </table>
 
 <script>
+    // Copy file path to clipboard
+    document.querySelectorAll('.copy-file-path').forEach(link => {
+        link.addEventListener('click', (event) => {
+            event.preventDefault();
+            const filePath = event.target.getAttribute('data-file-path');
+            navigator.clipboard.writeText(filePath)
+                .then(() => {
+                    alert(`File path "${filePath}" copied to clipboard.`);
+                })
+                .catch(err => {
+                    console.error('Error copying to clipboard:', err);
+                    alert('Failed to copy the file path to clipboard.');
+                });
+        });
+    });
+
     // Scroll to a specific file row on page load if a hash is present
     if (window.location.hash) {
         const hash = window.location.hash.substring(1);
@@ -127,12 +144,22 @@
                         const folderNameSpan = document.createElement('span');
                         folderNameSpan.textContent = folder;
 
-                        // Add "Open" link
-                        const openLink = document.createElement('a');
-                        openLink.href = `file://${folder}`;
-                        openLink.target = '_blank';
-                        openLink.textContent = 'Open';
-                        openLink.style.marginLeft = '10px';
+                        // Add "Copy Path" link for the folder
+                        const copyFolderPathLink = document.createElement('a');
+                        copyFolderPathLink.href = '#';
+                        copyFolderPathLink.textContent = 'Copy Path to Clipboard';
+                        copyFolderPathLink.style.marginLeft = '10px';
+                        copyFolderPathLink.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            navigator.clipboard.writeText(folder)
+                                .then(() => {
+                                    alert(`Folder path "${folder}" copied to clipboard.`);
+                                })
+                                .catch(err => {
+                                    console.error('Error copying to clipboard:', err);
+                                    alert('Failed to copy the folder path to clipboard.');
+                                });
+                        });
 
                         // Add "Move File" link
                         const moveLink = document.createElement('a');
@@ -163,8 +190,8 @@
                             });
                         });
 
+                        li.appendChild(copyFolderPathLink);
                         li.appendChild(folderNameSpan);
-                        li.appendChild(openLink);
                         li.appendChild(moveLink);
                         matchingFoldersElement.appendChild(li);
                     });
