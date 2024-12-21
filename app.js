@@ -1,11 +1,20 @@
-require('dotenv').config(); // Load environment variables
+require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
 const express = require('express');
-const { stringify } = require('csv-stringify/sync'); // CSV generation library
+const expressLayouts = require('express-ejs-layouts');
+const { stringify } = require('csv-stringify/sync');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Set EJS as the view engine
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
+
+// Use express-ejs-layouts
+app.use(expressLayouts);
+app.set('layout', 'layout'); // Default layout
 
 // Get the root folder path from the .env file
 const rootFolder = process.env.ROOT_FOLDER_TO_SCAN;
@@ -15,7 +24,7 @@ if (!rootFolder) {
     process.exit(1);
 }
 
-// Function to list only files in the root folder (no subfolders)
+// Function to list files in the root folder
 const listFilesInRootFolder = (folder) => {
     const files = [];
     try {
@@ -33,10 +42,9 @@ const listFilesInRootFolder = (folder) => {
     return files;
 };
 
-// Function to recursively list all files and their paths
+// Function to list all files recursively
 const listFilesRecursive = (folder) => {
     let files = [];
-
     try {
         const items = fs.readdirSync(folder);
 
@@ -47,88 +55,28 @@ const listFilesRecursive = (folder) => {
             if (stats.isFile()) {
                 files.push({ fileName: item, folderPath: folder });
             } else if (stats.isDirectory()) {
-                files = files.concat(listFilesRecursive(fullPath)); // Recurse into subfolder
+                files = files.concat(listFilesRecursive(fullPath));
             }
         });
     } catch (err) {
         console.error(`Error reading folder "${folder}": ${err.message}`);
     }
-
     return files;
 };
 
-// Generate an HTML table from the file list
-const generateHtmlTable = (files) => {
-    return `
-        <table>
-            <thead>
-                <tr>
-                    <th>File Name</th>
-                    <th>Folder Path</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${files
-                    .map(
-                        (file) => `
-                    <tr>
-                        <td>${file.fileName}</td>
-                        <td>${file.folderPath}</td>
-                    </tr>`
-                    )
-                    .join('')}
-            </tbody>
-        </table>
-    `;
-};
-
-// Web UI: List files in the root folder
+// Route: Files in root folder
 app.get('/root', (req, res) => {
     const rootFiles = listFilesInRootFolder(rootFolder);
-    res.send(`
-        <html>
-            <head>
-                <title>Files in Root Folder</title>
-                <style>
-                    body { font-family: Arial, sans-serif; padding: 20px; }
-                    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-                    th { background-color: #f4f4f4; }
-                </style>
-            </head>
-            <body>
-                <h1>Files in Root Folder</h1>
-                <p>Folder: <strong>${rootFolder}</strong></p>
-                ${generateHtmlTable(rootFiles)}
-            </body>
-        </html>
-    `);
+    res.render('root', { title: 'Files in Root Folder', rootFolder, files: rootFiles });
 });
 
-// Web UI: List all files including subfolders
+// Route: All files including subfolders
 app.get('/all', (req, res) => {
     const allFiles = listFilesRecursive(rootFolder);
-    res.send(`
-        <html>
-            <head>
-                <title>All Files</title>
-                <style>
-                    body { font-family: Arial, sans-serif; padding: 20px; }
-                    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-                    th { background-color: #f4f4f4; }
-                </style>
-            </head>
-            <body>
-                <h1>All Files (Including Subfolders)</h1>
-                <p>Folder: <strong>${rootFolder}</strong></p>
-                ${generateHtmlTable(allFiles)}
-            </body>
-        </html>
-    `);
+    res.render('all', { title: 'All Files (Including Subfolders)', rootFolder, files: allFiles });
 });
 
-// Download CSV for all files
+// Route: Download CSV for all files
 app.get('/download', (req, res) => {
     const allFiles = listFilesRecursive(rootFolder);
     const outputCsvPath = path.join(__dirname, 'files_list.csv');

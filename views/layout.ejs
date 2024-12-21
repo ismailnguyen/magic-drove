@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f4f4f4; }
+        nav a { margin-right: 15px; text-decoration: none; color: blue; }
+        nav a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <!-- Menu Bar -->
+    <nav>
+        <a href="/root">Root Folder Files</a>
+        <a href="/all">All Files</a>
+        <a href="/download">Download CSV</a>
+    </nav>
+
+    <!-- Page Content -->
+    <main>
+        <h1><%= title %></h1>
+        <%- body %>
+    </main>
+</body>
+</html>
