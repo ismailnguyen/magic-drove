@@ -4,7 +4,8 @@ const {
     listFilesRecursive,
     listFoldersRecursive,
     matchFoldersByTags,
-    moveFile
+    moveFile,
+    renameFile
 } = require('../services/fileService');
 const { stringify } = require('csv-stringify/sync');
 const path = require('path');
@@ -16,7 +17,7 @@ const rootFolder = process.env.ROOT_FOLDER_TO_SCAN;
 // Route: Files in root folder
 router.get('/root', (req, res) => {
     const rootFiles = listFilesInRootFolder(rootFolder);
-    res.render('root', { title: 'Files in Root Folder', rootFolder, files: rootFiles });
+    res.render('root', { title: 'Files in Root Folder', rootFolder, files: rootFiles, path });
 });
 
 // Route: All files including subfolders
@@ -45,6 +46,23 @@ router.get('/download', (req, res) => {
         res.download(outputCsvPath, 'files_list.csv');
     } catch (err) {
         res.status(500).send(`Error generating CSV: ${err.message}`);
+    }
+});
+
+// Route: Rename a file
+router.post('/rename-file', (req, res) => {
+    const { oldFileName, newFileName } = req.body;
+
+    if (!oldFileName || !newFileName) {
+        return res.status(400).json({ success: false, message: 'Old and new file names are required.' });
+    }
+
+    try {
+        renameFile(rootFolder, oldFileName, newFileName);
+        res.json({ success: true, message: `File renamed to "${newFileName}" successfully.` });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ success: false, message: err.message });
     }
 });
 

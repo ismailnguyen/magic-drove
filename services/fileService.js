@@ -122,10 +122,38 @@ const moveFile = (rootFolder, fileName, destination) => {
     }
 };
 
+/**
+ * Rename a file in the root folder.
+ * @param {string} rootFolder - The root folder path.
+ * @param {string} oldFileName - The current name of the file.
+ * @param {string} newFileName - The new name for the file.
+ * @throws Will throw an error if the old file doesn't exist, the new file already exists, or renaming fails.
+ */
+const renameFile = (rootFolder, oldFileName, newFileName) => {
+    const oldFilePath = path.join(rootFolder, oldFileName);
+    const newFilePath = path.join(rootFolder, newFileName);
+
+    if (!fs.existsSync(oldFilePath)) {
+        throw new Error('The file to rename does not exist.');
+    }
+
+    if (fs.existsSync(newFilePath)) {
+        throw new Error('A file with the new name already exists.');
+    }
+
+    try {
+        fs.renameSync(oldFilePath, newFilePath);
+    } catch (err) {
+        console.error(`Error renaming file "${oldFileName}" to "${newFileName}":`, err);
+        throw new Error('Failed to rename the file.');
+    }
+};
+
 module.exports = {
     listFilesInRootFolder,
     listFilesRecursive,
     listFoldersRecursive,
     matchFoldersByTags,
-    moveFile
+    moveFile,
+    renameFile
 };

@@ -10,8 +10,25 @@
     </thead>
     <tbody>
         <% files.forEach(file => { %>
-            <tr>
-                <td><%= file.fileName %></td>
+            <tr id="file-<%= file.fileName.replace(/\W/g, '_') %>">
+                <td>
+                    <span><%= file.fileName %></span>
+                    <!-- Open File Link -->
+                    <a 
+                        href="file://<%= path.join(rootFolder, file.fileName) %>" 
+                        target="_blank" 
+                        style="margin-left: 10px;">
+                        Open
+                    </a>
+                    <!-- Edit File Name Link -->
+                    <a 
+                        href="#" 
+                        class="edit-filename" 
+                        data-file="<%= file.fileName %>" 
+                        style="margin-left: 10px;">
+                        Edit
+                    </a>
+                </td>
                 <td>
                     <!-- Tags Input -->
                     <input 
@@ -39,6 +56,46 @@
 </table>
 
 <script>
+    // Scroll to a specific file row on page load if a hash is present
+    if (window.location.hash) {
+        const hash = window.location.hash.substring(1);
+        const element = document.getElementById(hash);
+        if (element) element.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Handle editing the file name
+    document.querySelectorAll('.edit-filename').forEach(link => {
+        link.addEventListener('click', (event) => {
+            event.preventDefault();
+            const fileName = event.target.getAttribute('data-file');
+            const newFileName = prompt(`Enter the new name for the file "${fileName}":`, fileName);
+
+            if (newFileName && newFileName.trim() !== '' && newFileName !== fileName) {
+                fetch('/rename-file', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ oldFileName: fileName, newFileName: newFileName.trim() }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Refresh page and scroll to the updated file
+                        window.location.hash = `file-${newFileName.replace(/\W/g, '_')}`;
+                        window.location.reload();
+                    } else {
+                        alert(data.message || 'Failed to rename the file.');
+                    }
+                })
+                .catch(err => {
+                    console.error('Error:', err);
+                    alert('An error occurred while renaming the file.');
+                });
+            }
+        });
+    });
+    
     document.querySelectorAll('.submit-tags').forEach(button => {
         button.addEventListener('click', (event) => {
             const fileName = event.target.getAttribute('data-file');
