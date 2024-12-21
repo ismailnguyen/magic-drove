@@ -22,5 +22,6 @@ app.listen(PORT, () => {
     console.log(`Server running at http://localhost:${PORT}`);
     console.log(`Visit http://localhost:${PORT}/root to view files in the root folder.`);
     console.log(`Visit http://localhost:${PORT}/all to view all files (including subfolders).`);
+    console.log(`Visit http://localhost:${PORT}/folders to view all folders.`);
     console.log(`Visit http://localhost:${PORT}/download to download a CSV of all files.`);
 });

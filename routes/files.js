@@ -1,5 +1,5 @@
 const express = require('express');
-const { listFilesInRootFolder, listFilesRecursive } = require('../services/fileService');
+const { listFilesInRootFolder, listFilesRecursive, listFoldersRecursive } = require('../services/fileService');
 const { stringify } = require('csv-stringify/sync');
 const path = require('path');
 const fs = require('fs');
@@ -17,6 +17,12 @@ router.get('/root', (req, res) => {
 router.get('/all', (req, res) => {
     const allFiles = listFilesRecursive(rootFolder);
     res.render('all', { title: 'All Files (Including Subfolders)', rootFolder, files: allFiles });
+});
+
+// Route: All folders and subfolders
+router.get('/folders', (req, res) => {
+    const folders = listFoldersRecursive(rootFolder);
+    res.render('folders', { title: 'Folders and Subfolders', rootFolder, folders });
 });
 
 // Route: Download CSV for all files

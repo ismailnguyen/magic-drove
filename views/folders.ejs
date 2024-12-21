@@ -1,0 +1,17 @@
+<p>Root Folder: <strong><%= rootFolder %></strong></p>
+<table>
+    <thead>
+        <tr>
+            <th>Folder Name</th>
+            <th>Folder Path</th>
+        </tr>
+    </thead>
+    <tbody>
+        <% folders.forEach(folder => { %>
+            <tr>
+                <td><%= folder.folderName %></td>
+                <td><%= folder.folderPath %></td>
+            </tr>
+        <% }); %>
+    </tbody>
+</table>

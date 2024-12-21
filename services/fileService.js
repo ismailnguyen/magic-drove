@@ -3,8 +3,6 @@ const path = require('path');
 
 /**
  * List files in the root folder only.
- * @param {string} folder - The folder path to scan.
- * @returns {Array} Array of file objects { fileName, folderPath }.
  */
 const listFilesInRootFolder = (folder) => {
     const files = [];
@@ -25,8 +23,6 @@ const listFilesInRootFolder = (folder) => {
 
 /**
  * Recursively list all files in the folder and its subfolders.
- * @param {string} folder - The folder path to scan.
- * @returns {Array} Array of file objects { fileName, folderPath }.
  */
 const listFilesRecursive = (folder) => {
     let files = [];
@@ -49,7 +45,29 @@ const listFilesRecursive = (folder) => {
     return files;
 };
 
+/**
+ * Recursively list all folders and subfolders.
+ */
+const listFoldersRecursive = (folder) => {
+    const folders = [];
+    try {
+        const items = fs.readdirSync(folder);
+
+        items.forEach((item) => {
+            const fullPath = path.join(folder, item);
+            if (fs.lstatSync(fullPath).isDirectory()) {
+                folders.push({ folderName: item, folderPath: fullPath });
+                folders.push(...listFoldersRecursive(fullPath));
+            }
+        });
+    } catch (err) {
+        console.error(`Error reading folder "${folder}": ${err.message}`);
+    }
+    return folders;
+};
+
 module.exports = {
     listFilesInRootFolder,
     listFilesRecursive,
+    listFoldersRecursive,
 };
