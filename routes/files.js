@@ -1,5 +1,5 @@
 const express = require('express');
-const { listFilesInRootFolder, listFilesRecursive, listFoldersRecursive } = require('../services/fileService');
+const { listFilesInRootFolder, listFilesRecursive, listFoldersRecursive, matchFoldersByTags } = require('../services/fileService');
 const { stringify } = require('csv-stringify/sync');
 const path = require('path');
 const fs = require('fs');
@@ -39,6 +39,28 @@ router.get('/download', (req, res) => {
         res.download(outputCsvPath, 'files_list.csv');
     } catch (err) {
         res.status(500).send(`Error generating CSV: ${err.message}`);
+    }
+});
+
+// Route: Match folders based on tags
+router.post('/match-folders', (req, res) => {
+    const { fileName, tags } = req.body;
+
+    if (!tags || tags.length === 0) {
+        return res.status(400).json({ success: false, message: 'Tags are required.' });
+    }
+
+    try {
+        const bestMatches = matchFoldersByTags(rootFolder, tags);
+
+        if (bestMatches.length === 0) {
+            return res.json({ success: false, folders: [] });
+        }
+
+        res.json({ success: true, folders: bestMatches });
+    } catch (err) {
+        console.error('Error finding matching folders:', err);
+        res.status(500).json({ success: false, message: 'An error occurred while matching folders.' });
     }
 });
 

@@ -6,6 +6,10 @@ const fileRoutes = require('./routes/files');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 // Set EJS as the view engine
 app.set('view engine', 'ejs');
 app.set('views', './views');

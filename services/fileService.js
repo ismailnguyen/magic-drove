@@ -66,8 +66,37 @@ const listFoldersRecursive = (folder) => {
     return folders;
 };
 
+/**
+ * Match folders based on the provided tags.
+ * @param {string} rootFolder - The root folder to scan.
+ * @param {Array} tags - Array of tags to match.
+ * @returns {Array} Array of matching folder paths sorted by relevance.
+ */
+const matchFoldersByTags = (rootFolder, tags) => {
+    if (!tags || tags.length === 0) {
+        throw new Error('Tags are required for folder matching.');
+    }
+
+    const allFolders = listFoldersRecursive(rootFolder);
+
+    // Find folders with the most matches for tags
+    const folderMatches = allFolders.map(folder => {
+        const matchCount = tags.filter(tag => folder.folderPath.toLowerCase().includes(tag.toLowerCase())).length;
+        return { folderPath: folder.folderPath, matchCount };
+    });
+
+    // Sort folders by match count in descending order
+    folderMatches.sort((a, b) => b.matchCount - a.matchCount);
+
+    // Get top matching folders
+    const bestMatches = folderMatches.filter(folder => folder.matchCount > 0).map(folder => folder.folderPath);
+
+    return bestMatches;
+};
+
 module.exports = {
     listFilesInRootFolder,
     listFilesRecursive,
     listFoldersRecursive,
+    matchFoldersByTags
 };

@@ -3,15 +3,67 @@
     <thead>
         <tr>
             <th>File Name</th>
-            <th>Folder Path</th>
+            <th>Tags</th>
+            <th>Action</th>
         </tr>
     </thead>
     <tbody>
         <% files.forEach(file => { %>
             <tr>
                 <td><%= file.fileName %></td>
-                <td><%= file.folderPath %></td>
+                <td>
+                    <!-- Tags Input -->
+                    <input 
+                        type="text" 
+                        class="tags-input" 
+                        placeholder="Add tags separated by commas" 
+                        data-file="<%= file.fileName %>"
+                    />
+                </td>
+                <td>
+                    <!-- Submit Button -->
+                    <button 
+                        class="submit-tags" 
+                        data-file="<%= file.fileName %>">
+                        Submit
+                    </button>
+                </td>
             </tr>
         <% }); %>
     </tbody>
 </table>
+
+<script>
+    document.querySelectorAll('.submit-tags').forEach(button => {
+        button.addEventListener('click', (event) => {
+            const fileName = event.target.getAttribute('data-file');
+            const inputField = document.querySelector(`.tags-input[data-file="${fileName}"]`);
+            const tags = inputField.value.split(',').map(tag => tag.trim()).filter(tag => tag);
+
+            if (tags.length === 0) {
+                alert('Please enter at least one tag.');
+                return;
+            }
+
+            fetch(`/match-folders`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ fileName, tags }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(`Best matching folders for ${fileName}:\n` + data.folders.join('\n'));
+                } else {
+                    alert('No matching folders found.');
+                }
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                alert('An error occurred. Please try again.');
+            });
+        });
+    });
+</script>
