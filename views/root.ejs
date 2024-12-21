@@ -1,55 +1,48 @@
-<p>Folder: <strong><%= rootFolder %></strong></p>
-<table>
+<p class="text-lg font-medium">Folder: <strong><%= rootFolder %></strong></p>
+<table class="table-auto w-full border-collapse border border-gray-200 mt-4">
     <thead>
-        <tr>
-            <th>File Name</th>
-            <th>Tags</th>
-            <th>Action</th>
-            <th>Best Match Folders</th>
+        <tr class="bg-gray-100">
+            <th class="border border-gray-300 px-4 py-2">File Name</th>
+            <th class="border border-gray-300 px-4 py-2">Tags</th>
+            <th class="border border-gray-300 px-4 py-2">Action</th>
+            <th class="border border-gray-300 px-4 py-2">Best Match Folders</th>
         </tr>
     </thead>
     <tbody>
         <% files.forEach(file => { %>
-            <tr id="file-<%= file.fileName.replace(/\W/g, '_') %>">
-                <td>
+            <tr class="odd:bg-white even:bg-gray-50">
+                <td class="border border-gray-300 px-4 py-2">
                     <span><%= file.fileName %></span>
-                    <!-- Copy File Path to Clipboard -->
                     <a 
                         href="#" 
-                        class="copy-file-path" 
-                        data-file-path="<%= path.join(rootFolder, file.fileName) %>" 
-                        style="margin-left: 10px;">
+                        class="text-blue-500 hover:underline ml-4 copy-file-path" 
+                        data-file-path="<%= path.join(rootFolder, file.fileName) %>">
                         Copy File Path to Clipboard
                     </a>
-                    <!-- Edit File Name Link -->
                     <a 
                         href="#" 
-                        class="edit-filename" 
-                        data-file="<%= file.fileName %>" 
-                        style="margin-left: 10px;">
+                        class="text-blue-500 hover:underline ml-4 edit-filename" 
+                        data-file="<%= file.fileName %>">
                         Edit
                     </a>
                 </td>
-                <td>
-                    <!-- Tags Input -->
+                <td class="border border-gray-300 px-4 py-2">
                     <input 
                         type="text" 
-                        class="tags-input" 
+                        class="tags-input w-full border border-gray-300 px-2 py-1 rounded" 
                         placeholder="Add tags separated by commas" 
                         data-file="<%= file.fileName %>"
                     />
                 </td>
-                <td>
-                    <!-- Submit Button -->
+                <td class="border border-gray-300 px-4 py-2">
                     <button 
-                        class="submit-tags" 
+                        class="submit-tags bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" 
                         data-file="<%= file.fileName %>">
                         Submit
                     </button>
                 </td>
-                <td>
-                    <!-- Placeholder for matching folders -->
-                    <ul class="matching-folders" data-file="<%= file.fileName %>"></ul>
+                <td class="border border-gray-300 px-4 py-2">
+                    <ul class="matching-folders space-y-2" data-file="<%= file.fileName %>"></ul>
                 </td>
             </tr>
         <% }); %>

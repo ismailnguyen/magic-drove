@@ -4,28 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><%= title %></title>
-    <style>
-        body { font-family: Arial, sans-serif; padding: 20px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f4f4f4; }
-        nav a { margin-right: 15px; text-decoration: none; color: blue; }
-        nav a:hover { text-decoration: underline; }
-    </style>
+    <link href="/css/tailwind.css" rel="stylesheet">
 </head>
-<body>
-    <!-- Menu Bar -->
-    <nav>
-        <a href="/root">Root Folder Files</a>
-        <a href="/all">All Files</a>
-        <a href="/folders">Folders</a>
-        <a href="/download">Download CSV</a>
+<body class="bg-gray-100 font-sans">
+    <nav class="bg-blue-500 p-4 text-white">
+        <div class="container mx-auto">
+            <a href="/root" class="mr-4 hover:underline">Root Folder Files</a>
+            <a href="/all" class="mr-4 hover:underline">All Files</a>
+            <a href="/folders" class="mr-4 hover:underline">Folders</a>
+            <a href="/download" class="hover:underline">Download CSV</a>
+        </div>
     </nav>
-
-    <!-- Main Content -->
-    <main>
-        <h1><%= title %></h1>
+    <div class="container mx-auto p-6">
+        <h1 class="text-2xl font-bold mb-4"><%= title %></h1>
         <%- body %>
-    </main>
+    </div>
 </body>
 </html>

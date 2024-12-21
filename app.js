@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const expressLayouts = require('express-ejs-layouts');
 const fileRoutes = require('./routes/files');
+const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -20,6 +21,9 @@ app.set('layout', 'layout');
 
 // Use the file routes
 app.use(fileRoutes);
+
+// Serve static files from the "public" directory
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Start the server
 app.listen(PORT, () => {
