@@ -5,6 +5,7 @@
             <th>File Name</th>
             <th>Tags</th>
             <th>Action</th>
+            <th>Best Match Folders</th>
         </tr>
     </thead>
     <tbody>
@@ -27,6 +28,10 @@
                         data-file="<%= file.fileName %>">
                         Submit
                     </button>
+                </td>
+                <td>
+                    <!-- Placeholder for matching folders -->
+                    <ul class="matching-folders" data-file="<%= file.fileName %>"></ul>
                 </td>
             </tr>
         <% }); %>
@@ -54,10 +59,19 @@
             })
             .then(response => response.json())
             .then(data => {
-                if (data.success) {
-                    alert(`Best matching folders for ${fileName}:\n` + data.folders.join('\n'));
+                const matchingFoldersElement = document.querySelector(`.matching-folders[data-file="${fileName}"]`);
+                matchingFoldersElement.innerHTML = ''; // Clear any previous matches
+
+                if (data.success && data.folders.length > 0) {
+                    data.folders.forEach(folder => {
+                        const li = document.createElement('li');
+                        li.textContent = folder;
+                        matchingFoldersElement.appendChild(li);
+                    });
                 } else {
-                    alert('No matching folders found.');
+                    const li = document.createElement('li');
+                    li.textContent = 'No matching folders found.';
+                    matchingFoldersElement.appendChild(li);
                 }
             })
             .catch(err => {
