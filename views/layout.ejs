@@ -15,9 +15,35 @@
             <a href="/download" class="hover:underline">Download CSV</a>
         </div>
     </nav>
+    <div id="toast-container" class="fixed top-4 right-4 space-y-4 z-50"></div> <!-- Toast Container -->
     <div class="container mx-auto p-6">
         <h1 class="text-2xl font-bold mb-4"><%= title %></h1>
         <%- body %>
     </div>
+
+    <script>
+        // Function to display a toast notification
+        function showToast(message, type = 'success') {
+            const toastContainer = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            // Toast styles
+            toast.className = `px-4 py-2 rounded shadow-lg text-white ${
+                type === 'success' ? 'bg-green-500' : 'bg-red-500'
+            } transition-opacity duration-300 opacity-0`;
+            toast.textContent = message;
+            
+            // Append and show the toast
+            toastContainer.appendChild(toast);
+            setTimeout(() => (toast.style.opacity = '1'), 10);
+            
+            // Remove the toast after 3 seconds
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+    </script>
+
 </body>
 </html>
