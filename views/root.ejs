@@ -44,12 +44,12 @@
             const fileName = event.target.getAttribute('data-file');
             const inputField = document.querySelector(`.tags-input[data-file="${fileName}"]`);
             const tags = inputField.value.split(',').map(tag => tag.trim()).filter(tag => tag);
-
+    
             if (tags.length === 0) {
                 alert('Please enter at least one tag.');
                 return;
             }
-
+    
             fetch(`/match-folders`, {
                 method: 'POST',
                 headers: {
@@ -60,12 +60,54 @@
             .then(response => response.json())
             .then(data => {
                 const matchingFoldersElement = document.querySelector(`.matching-folders[data-file="${fileName}"]`);
-                matchingFoldersElement.innerHTML = ''; // Clear any previous matches
-
+                matchingFoldersElement.innerHTML = ''; // Clear previous matches
+    
                 if (data.success && data.folders.length > 0) {
                     data.folders.forEach(folder => {
                         const li = document.createElement('li');
-                        li.textContent = folder;
+    
+                        // Add folder name
+                        const folderNameSpan = document.createElement('span');
+                        folderNameSpan.textContent = folder;
+    
+                        // Add "Open" link
+                        const openLink = document.createElement('a');
+                        openLink.href = `file://${folder}`;
+                        openLink.target = '_blank';
+                        openLink.textContent = 'Open';
+                        openLink.style.marginLeft = '10px';
+    
+                        // Add "Move File" link
+                        const moveLink = document.createElement('a');
+                        moveLink.href = '#';
+                        moveLink.textContent = 'Move File';
+                        moveLink.style.marginLeft = '10px';
+                        moveLink.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            fetch(`/move-file`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({ fileName, destination: folder }),
+                            })
+                            .then(moveResponse => moveResponse.json())
+                            .then(moveData => {
+                                if (moveData.success) {
+                                    alert(`File "${fileName}" moved to "${folder}" successfully.`);
+                                } else {
+                                    alert(`Failed to move file "${fileName}" to "${folder}".`);
+                                }
+                            })
+                            .catch(err => {
+                                console.error('Error:', err);
+                                alert('An error occurred while moving the file.');
+                            });
+                        });
+    
+                        li.appendChild(folderNameSpan);
+                        li.appendChild(openLink);
+                        li.appendChild(moveLink);
                         matchingFoldersElement.appendChild(li);
                     });
                 } else {

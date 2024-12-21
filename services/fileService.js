@@ -95,9 +95,37 @@ const matchFoldersByTags = (rootFolder, tags) => {
     return matchedFolders.map(folder => folder.folderPath);
 };
 
+/**
+ * Move a file to a specified folder.
+ * @param {string} rootFolder - The root folder path.
+ * @param {string} fileName - The name of the file to move.
+ * @param {string} destination - The destination folder path.
+ * @throws Will throw an error if the file or destination folder doesn't exist, or the move operation fails.
+ */
+const moveFile = (rootFolder, fileName, destination) => {
+    const sourcePath = path.join(rootFolder, fileName);
+    const destinationPath = path.join(destination, fileName);
+
+    if (!fs.existsSync(sourcePath)) {
+        throw new Error('Source file does not exist.');
+    }
+
+    if (!fs.existsSync(destination)) {
+        throw new Error('Destination folder does not exist.');
+    }
+
+    try {
+        fs.renameSync(sourcePath, destinationPath);
+    } catch (err) {
+        console.error(`Error moving file "${fileName}" to "${destination}":`, err);
+        throw new Error('Failed to move the file.');
+    }
+};
+
 module.exports = {
     listFilesInRootFolder,
     listFilesRecursive,
     listFoldersRecursive,
-    matchFoldersByTags
+    matchFoldersByTags,
+    moveFile
 };

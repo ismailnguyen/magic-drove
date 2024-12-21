@@ -1,5 +1,11 @@
 const express = require('express');
-const { listFilesInRootFolder, listFilesRecursive, listFoldersRecursive, matchFoldersByTags } = require('../services/fileService');
+const {
+    listFilesInRootFolder,
+    listFilesRecursive,
+    listFoldersRecursive,
+    matchFoldersByTags,
+    moveFile
+} = require('../services/fileService');
 const { stringify } = require('csv-stringify/sync');
 const path = require('path');
 const fs = require('fs');
@@ -61,6 +67,23 @@ router.post('/match-folders', (req, res) => {
     } catch (err) {
         console.error('Error finding matching folders:', err);
         res.status(500).json({ success: false, message: 'An error occurred while matching folders.' });
+    }
+});
+
+// Route: Move a file to the specified folder
+router.post('/move-file', (req, res) => {
+    const { fileName, destination } = req.body;
+
+    if (!fileName || !destination) {
+        return res.status(400).json({ success: false, message: 'File name and destination folder are required.' });
+    }
+
+    try {
+        moveFile(rootFolder, fileName, destination);
+        res.json({ success: true, message: `File "${fileName}" moved to "${destination}" successfully.` });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ success: false, message: err.message });
     }
 });
 
