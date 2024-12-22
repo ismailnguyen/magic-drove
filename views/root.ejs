@@ -11,7 +11,7 @@
     <tbody>
         <% files.forEach(file => { %>
             <tr class="odd:bg-white even:bg-gray-50">
-                <td class="border border-gray-300 px-4 py-2">
+                <td class="border border-gray-300 px-4 py-2" data-file="<%= file.fileName %>">
                     <span><%= file.fileName %></span>
                     <!-- Copy to Clipboard Icon -->
                     <a href="#" class="text-blue-500 hover:text-blue-700 ml-4 copy-file-path"
@@ -146,6 +146,14 @@
                 return;
             }
 
+            const matchingFoldersElement = document.querySelector(`.matching-folders[data-file="${fileName}"]`);
+            const fileNameCell = document.querySelector(`td[data-file="${fileName}"]`);
+
+            // Add a loading placeholder
+            matchingFoldersElement.innerHTML = '<div class="text-gray-500">Looking for best matching folders...</div>';
+            // Float the file name to the top
+            fileNameCell.style.verticalAlign = 'top';
+
             fetch(`/match-folders`, {
                 method: 'POST',
                 headers: {
@@ -155,7 +163,6 @@
             })
             .then(response => response.json())
             .then(data => {
-                const matchingFoldersElement = document.querySelector(`.matching-folders[data-file="${fileName}"]`);
                 matchingFoldersElement.innerHTML = ''; // Clear previous matches
 
                 if (data.success && data.folders.length > 0) {
@@ -236,7 +243,7 @@
             })
             .catch(err => {
                 console.error('Error:', err);
-                showToast('An error occurred. Please try again.', 'error');
+                matchingFoldersElement.innerHTML = '<div class="text-red-500">An error occurred. Please try again.</div>';
             });
         });
     });
