@@ -119,29 +119,55 @@
 
     // Auto-fill tags input with words from the file name
     document.querySelectorAll('.magic-wand-btn').forEach(button => {
-        button.addEventListener('click', (event) => {
+        button.addEventListener('click', async (event) => {
             event.preventDefault();
-
+    
             const fileName = event.target.closest('button').getAttribute('data-file');
             const inputField = document.querySelector(`.tags-input[data-file="${fileName}"]`);
-            
+            const matchingFoldersElement = document.querySelector(`.matching-folders[data-file="${fileName}"]`);
+    
             if (!fileName) return;
-
-            // Extract words from the file name, excluding extension
+    
+            // Extract base words from the file name
             const baseName = fileName.split('.').slice(0, -1).join('.'); // Remove extension
-            const parts = baseName.split(/[_\s]+/); // Split by underscores or spaces
-
-            // Process each part
-            const tags = parts.map(part => {
+            const parts = baseName.split(/[_\s]+/).map(part => {
                 if (/^\d{8}$/.test(part)) {
-                    // Extract year from date format YYYYMMDD
-                    return part.slice(0, 4);
+                    return part.slice(0, 4); // Extract year from YYYYMMDD
                 }
                 return part;
             });
-
-            // Update the tags input
-            inputField.value = tags.join(', ');
+    
+            try {
+                // Fetch best matching folders
+                const response = await fetch('/match-folders', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ fileName, tags: parts }),
+                });
+                const data = await response.json();
+    
+                if (data.success && data.folders.length > 0) {
+                    // Collect all folder paths
+                    const folderPaths = data.folders.map(folder => folder.toLowerCase());
+    
+                    // Filter parts that match any folder path
+                    const matchingTags = parts.filter(part =>
+                        folderPaths.some(folderPath => folderPath.includes(part.toLowerCase()))
+                    );
+    
+                    // Update the tags input
+                    const currentTags = inputField.value.split(',').map(tag => tag.trim());
+                    const updatedTags = [...new Set([...currentTags, ...matchingTags])]; // Avoid duplicates
+                    inputField.value = updatedTags.join(', ');
+                } else {
+                    showToast('No matching folders found for the magic wand.', 'error');
+                }
+            } catch (error) {
+                console.error('Error fetching matching folders:', error);
+                showToast('An error occurred while using the magic wand.', 'error');
+            }
         });
     });
 
