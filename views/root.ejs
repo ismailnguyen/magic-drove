@@ -54,6 +54,26 @@
 
 <script>
     document.querySelectorAll('.tags-input').forEach(input => {
+        const measureSpan = document.createElement('span'); // Hidden span to measure text width
+        measureSpan.style.position = 'absolute';
+        measureSpan.style.visibility = 'hidden';
+        measureSpan.style.whiteSpace = 'pre';
+        document.body.appendChild(measureSpan);
+    
+        const adjustWidth = () => {
+            measureSpan.textContent = input.value || input.placeholder; // Use placeholder if empty
+            input.style.width = `${measureSpan.offsetWidth + 20}px`; // Add padding
+        };
+    
+        // Adjust width on input and focus events
+        input.addEventListener('input', adjustWidth);
+        input.addEventListener('focus', adjustWidth);
+    
+        // Initialize width
+        adjustWidth();
+    });
+    
+    document.querySelectorAll('.tags-input').forEach(input => {
         const autocompleteContainer = document.createElement('ul');
         autocompleteContainer.className = 'autocomplete-dropdown absolute bg-white border border-gray-300 rounded shadow-lg w-full max-h-40 overflow-y-auto hidden';
         input.parentElement.appendChild(autocompleteContainer);
