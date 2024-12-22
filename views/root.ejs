@@ -124,7 +124,6 @@
     
             const fileName = event.target.closest('button').getAttribute('data-file');
             const inputField = document.querySelector(`.tags-input[data-file="${fileName}"]`);
-            const matchingFoldersElement = document.querySelector(`.matching-folders[data-file="${fileName}"]`);
     
             if (!fileName) return;
     
@@ -138,7 +137,7 @@
             });
     
             try {
-                // Fetch best matching folders
+                // Send the extracted parts as tags to match folders
                 const response = await fetch('/match-folders', {
                     method: 'POST',
                     headers: {
