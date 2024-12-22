@@ -27,11 +27,16 @@
                 <td class="border border-gray-300 px-4 py-2">
                     <input type="text" class="tags-input w-full border border-gray-300 px-2 py-1 rounded"
                         placeholder="Add tags separated by commas" data-file="<%= file.fileName %>">
+                    <button 
+                        class="magic-wand-btn text-blue-500 hover:text-blue-700 ml-2"
+                        data-file="<%= file.fileName %>">
+                        <i class="fas fa-magic"></i>
+                    </button>
                 </td>
                 <td class="border border-gray-300 px-4 py-2">
-                    <button class="submit-tags bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                    <button class="find-folders-btn bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
                         data-file="<%= file.fileName %>">
-                        Submit
+                        Find folders
                     </button>
                 </td>
                 <td class="border border-gray-300 px-4 py-2">
@@ -43,6 +48,34 @@
 </table>
 
 <script>
+    // Auto-fill tags input with words from the file name
+    document.querySelectorAll('.magic-wand-btn').forEach(button => {
+        button.addEventListener('click', (event) => {
+            event.preventDefault();
+
+            const fileName = event.target.closest('button').getAttribute('data-file');
+            const inputField = document.querySelector(`.tags-input[data-file="${fileName}"]`);
+            
+            if (!fileName) return;
+
+            // Extract words from the file name, excluding extension
+            const baseName = fileName.split('.').slice(0, -1).join('.'); // Remove extension
+            const parts = baseName.split(/[_\s]+/); // Split by underscores or spaces
+
+            // Process each part
+            const tags = parts.map(part => {
+                if (/^\d{8}$/.test(part)) {
+                    // Extract year from date format YYYYMMDD
+                    return part.slice(0, 4);
+                }
+                return part;
+            });
+
+            // Update the tags input
+            inputField.value = tags.join(', ');
+        });
+    });
+
     // Copy file path to clipboard
     document.querySelectorAll('.copy-file-path').forEach(link => {
         link.addEventListener('click', (event) => {
@@ -99,11 +132,14 @@
         });
     });
     
-    document.querySelectorAll('.submit-tags').forEach(button => {
+    document.querySelectorAll('.find-folders-btn').forEach(button => {
         button.addEventListener('click', (event) => {
             const fileName = event.target.getAttribute('data-file');
             const inputField = document.querySelector(`.tags-input[data-file="${fileName}"]`);
-            const tags = inputField.value.split(',').map(tag => tag.trim()).filter(tag => tag);
+            const tags = inputField.value
+            .split(',')
+            .map(tag => tag.trim().toLowerCase()) // Normalize tags to lowercase
+            .filter(tag => tag);
 
             if (tags.length === 0) {
                 showToast('Please enter at least one tag.', 'error');
@@ -126,6 +162,19 @@
                     data.folders.forEach(folder => {
                         const li = document.createElement('li');
 
+                        // Highlight matching parts of the folder path (partial and case-insensitive)
+                        const highlightedPath = folder.split('/').map(part => {
+                            const lowerPart = part.toLowerCase();
+                            const isMatch = tags.some(tag => lowerPart.includes(tag)); // Check for partial match
+                            if (isMatch) {
+                                // Highlight matching folder names
+                                return `<span class="bg-yellow-200 font-bold">${part}</span>`;
+                            }
+                            return part;
+                        }).join('/');
+
+                        li.innerHTML = highlightedPath;
+
                         // Add folder name
                         const folderNameSpan = document.createElement('span');
                         folderNameSpan.textContent = folder;
@@ -133,8 +182,7 @@
                         // Add "Copy Path" link for the folder
                         const copyFolderPathLink = document.createElement('a');
                         copyFolderPathLink.href = '#';
-                        copyFolderPathLink.innerHTML = '<i class="fas fa-copy"></i>';
-                        copyFolderPathLink.className = 'text-blue-500 hover:text-blue-700 ml-4';
+                        copyFolderPathLink.innerHTML = '<i class="fas fa-copy text-blue-500 hover:text-blue-700 ml-4"></i>';
                         copyFolderPathLink.addEventListener('click', (e) => {
                             e.preventDefault();
                             navigator.clipboard.writeText(folder)
@@ -176,7 +224,6 @@
                             });
                         });
 
-                        li.appendChild(folderNameSpan);
                         li.appendChild(copyFolderPathLink);
                         li.appendChild(moveLink);
                         matchingFoldersElement.appendChild(li);
