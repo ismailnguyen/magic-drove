@@ -14,8 +14,14 @@ const fs = require('fs');
 const router = express.Router();
 const rootFolder = process.env.ROOT_FOLDER_TO_SCAN;
 
-// Route: Files in root folder
+
+// Redirect default route "/" to "/root"
 router.get('/root', (req, res) => {
+    res.redirect('/');
+});
+
+// Route: Files in root folder
+router.get('/', (req, res) => {
     const rootFiles = listFilesInRootFolder(rootFolder);
     res.render('root', { title: 'Files in Root Folder', rootFolder, files: rootFiles, path });
 });
