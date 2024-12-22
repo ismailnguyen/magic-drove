@@ -72,7 +72,7 @@
         // Initialize width
         adjustWidth();
     });
-    
+
     document.querySelectorAll('.tags-input').forEach(input => {
         const autocompleteContainer = document.createElement('ul');
         autocompleteContainer.className = 'autocomplete-dropdown absolute bg-white border border-gray-300 rounded shadow-lg w-full max-h-40 overflow-y-auto hidden';
@@ -166,20 +166,20 @@
                     body: JSON.stringify({ fileName, tags: parts }),
                 });
                 const data = await response.json();
-    
+
                 if (data.success && data.folders.length > 0) {
                     // Collect all folder paths
                     const folderPaths = data.folders.map(folder => folder.toLowerCase());
-    
+
                     // Filter parts that match any folder path
                     const matchingTags = parts.filter(part =>
                         folderPaths.some(folderPath => folderPath.includes(part.toLowerCase()))
                     );
-    
+
                     // Update the tags input
-                    const currentTags = inputField.value.split(',').map(tag => tag.trim());
+                    const currentTags = inputField.value.split(',').map(tag => tag.trim()).filter(Boolean);
                     const updatedTags = [...new Set([...currentTags, ...matchingTags])]; // Avoid duplicates
-                    inputField.value = updatedTags.join(', ');
+                    inputField.value = updatedTags.join(', '); // Ensure proper comma-separated format
                 } else {
                     showToast('No matching folders found for the magic wand.', 'error');
                 }
