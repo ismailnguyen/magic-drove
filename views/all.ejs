@@ -1,16 +1,16 @@
-<p>Folder: <strong><%= rootFolder %></strong></p>
-<table>
+<p class="text-lg font-medium">Folder: <strong><%= rootFolder %></strong></p>
+<table class="table-auto w-full border-collapse border border-gray-200 mt-4">
     <thead>
-        <tr>
-            <th>File Name</th>
-            <th>Folder Path</th>
+        <tr class="bg-gray-100">
+            <th class="border border-gray-300 px-4 py-2">File Name</th>
+            <th class="border border-gray-300 px-4 py-2">Folder Path</th>
         </tr>
     </thead>
     <tbody>
         <% files.forEach(file => { %>
-            <tr>
-                <td><%= file.fileName %></td>
-                <td><%= file.folderPath %></td>
+            <tr class="odd:bg-white even:bg-gray-50">
+                <td class="border border-gray-300 px-4 py-2"><%= file.fileName %></td>
+                <td class="border border-gray-300 px-4 py-2"><%= file.folderPath %></td>
             </tr>
         <% }); %>
     </tbody>

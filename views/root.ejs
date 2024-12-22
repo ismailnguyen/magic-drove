@@ -13,30 +13,23 @@
             <tr class="odd:bg-white even:bg-gray-50">
                 <td class="border border-gray-300 px-4 py-2">
                     <span><%= file.fileName %></span>
-                    <a 
-                        href="#" 
-                        class="text-blue-500 hover:underline ml-4 copy-file-path" 
+                    <!-- Copy to Clipboard Icon -->
+                    <a href="#" class="text-blue-500 hover:text-blue-700 ml-4 copy-file-path"
                         data-file-path="<%= path.join(rootFolder, file.fileName) %>">
-                        Copy File Path to Clipboard
+                        <i class="fas fa-copy"></i>
                     </a>
-                    <a 
-                        href="#" 
-                        class="text-blue-500 hover:underline ml-4 edit-filename" 
+                    <!-- Edit Icon -->
+                    <a href="#" class="text-blue-500 hover:text-blue-700 ml-4 edit-filename"
                         data-file="<%= file.fileName %>">
-                        Edit
+                        <i class="fas fa-edit"></i>
                     </a>
                 </td>
                 <td class="border border-gray-300 px-4 py-2">
-                    <input 
-                        type="text" 
-                        class="tags-input w-full border border-gray-300 px-2 py-1 rounded" 
-                        placeholder="Add tags separated by commas" 
-                        data-file="<%= file.fileName %>"
-                    />
+                    <input type="text" class="tags-input w-full border border-gray-300 px-2 py-1 rounded"
+                        placeholder="Add tags separated by commas" data-file="<%= file.fileName %>">
                 </td>
                 <td class="border border-gray-300 px-4 py-2">
-                    <button 
-                        class="submit-tags bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" 
+                    <button class="submit-tags bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
                         data-file="<%= file.fileName %>">
                         Submit
                     </button>
@@ -54,14 +47,14 @@
     document.querySelectorAll('.copy-file-path').forEach(link => {
         link.addEventListener('click', (event) => {
             event.preventDefault();
-            const filePath = event.target.getAttribute('data-file-path');
+            const filePath = event.target.closest('a').getAttribute('data-file-path');
             navigator.clipboard.writeText(filePath)
                 .then(() => {
                     showToast(`File path "${filePath}" copied to clipboard.`);
                 })
                 .catch(err => {
                     console.error('Error copying to clipboard:', err);
-                    showToast('Failed to copy the file path to clipboard.');
+                    showToast('Failed to copy the file path to clipboard.', 'error');
                 });
         });
     });
@@ -77,7 +70,7 @@
     document.querySelectorAll('.edit-filename').forEach(link => {
         link.addEventListener('click', (event) => {
             event.preventDefault();
-            const fileName = event.target.getAttribute('data-file');
+            const fileName = event.target.closest('a').getAttribute('data-file');
             const newFileName = prompt(`Enter the new name for the file "${fileName}":`, fileName);
 
             if (newFileName && newFileName.trim() !== '' && newFileName !== fileName) {
@@ -100,7 +93,7 @@
                 })
                 .catch(err => {
                     console.error('Error:', err);
-                    showToast('An error occurred while renaming the file.');
+                    showToast('An error occurred while renaming the file.', 'error');
                 });
             }
         });
@@ -113,7 +106,7 @@
             const tags = inputField.value.split(',').map(tag => tag.trim()).filter(tag => tag);
 
             if (tags.length === 0) {
-                showToast('Please enter at least one tag.');
+                showToast('Please enter at least one tag.', 'error');
                 return;
             }
 
@@ -140,8 +133,8 @@
                         // Add "Copy Path" link for the folder
                         const copyFolderPathLink = document.createElement('a');
                         copyFolderPathLink.href = '#';
-                        copyFolderPathLink.textContent = 'Copy Path to Clipboard';
-                        copyFolderPathLink.style.marginLeft = '10px';
+                        copyFolderPathLink.innerHTML = '<i class="fas fa-copy"></i>';
+                        copyFolderPathLink.className = 'text-blue-500 hover:text-blue-700 ml-4';
                         copyFolderPathLink.addEventListener('click', (e) => {
                             e.preventDefault();
                             navigator.clipboard.writeText(folder)
@@ -157,8 +150,8 @@
                         // Add "Move File" link
                         const moveLink = document.createElement('a');
                         moveLink.href = '#';
-                        moveLink.textContent = 'Move File';
-                        moveLink.style.marginLeft = '10px';
+                        moveLink.innerHTML = '<i class="fas fa-folder-open"></i>';
+                        moveLink.className = 'text-blue-500 hover:text-blue-700 ml-4';
                         moveLink.addEventListener('click', (e) => {
                             e.preventDefault();
                             fetch(`/move-file`, {
@@ -183,8 +176,8 @@
                             });
                         });
 
-                        li.appendChild(copyFolderPathLink);
                         li.appendChild(folderNameSpan);
+                        li.appendChild(copyFolderPathLink);
                         li.appendChild(moveLink);
                         matchingFoldersElement.appendChild(li);
                     });
@@ -196,7 +189,7 @@
             })
             .catch(err => {
                 console.error('Error:', err);
-                showToast('An error occurred. Please try again.');
+                showToast('An error occurred. Please try again.', 'error');
             });
         });
     });
