@@ -24,14 +24,19 @@
                         <i class="fas fa-edit"></i>
                     </a>
                 </td>
-                <td class="border border-gray-300 px-4 py-2">
-                    <input type="text" class="tags-input w-full border border-gray-300 px-2 py-1 rounded"
-                        placeholder="Add tags separated by commas" data-file="<%= file.fileName %>">
-                    <button 
-                        class="magic-wand-btn text-blue-500 hover:text-blue-700 ml-2"
-                        data-file="<%= file.fileName %>">
-                        <i class="fas fa-magic"></i>
-                    </button>
+                <td class="border border-gray-300 px-4 py-2 relative">
+                    <div class="flex items-center">
+                        <input 
+                            type="text" 
+                            class="tags-input w-full border border-gray-300 px-2 py-1 rounded" 
+                            placeholder="Add tags separated by commas" 
+                            data-file="<%= file.fileName %>">
+                        <button 
+                            class="magic-wand-btn text-blue-500 hover:text-blue-700 ml-2"
+                            data-file="<%= file.fileName %>">
+                            <i class="fas fa-magic"></i>
+                        </button>
+                    </div>
                 </td>
                 <td class="border border-gray-300 px-4 py-2">
                     <button class="find-folders-btn bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
@@ -48,6 +53,70 @@
 </table>
 
 <script>
+    document.querySelectorAll('.tags-input').forEach(input => {
+        const autocompleteContainer = document.createElement('ul');
+        autocompleteContainer.className = 'autocomplete-dropdown absolute bg-white border border-gray-300 rounded shadow-lg w-full max-h-40 overflow-y-auto hidden';
+        input.parentElement.appendChild(autocompleteContainer);
+    
+        input.addEventListener('input', (event) => {
+            const fileName = input.getAttribute('data-file');
+            const searchText = input.value.trim().toLowerCase();
+    
+            // Clear the dropdown if the input is empty
+            if (!searchText) {
+                autocompleteContainer.innerHTML = '';
+                autocompleteContainer.classList.add('hidden');
+                return;
+            }
+    
+            // Extract base words from the file name (same logic as the magic wand)
+            const baseName = fileName.split('.').slice(0, -1).join('.');
+            const parts = baseName.split(/[_\s]+/).map(part => {
+                if (/^\d{8}$/.test(part)) {
+                    return part.slice(0, 4); // Extract year from YYYYMMDD
+                }
+                return part;
+            });
+    
+            // Filter matching parts based on the input
+            const matches = parts.filter(part => part.toLowerCase().includes(searchText));
+    
+            // Update the dropdown with matching results
+            autocompleteContainer.innerHTML = matches
+                .map(match => `<li class="p-2 hover:bg-blue-100 cursor-pointer">${match}</li>`)
+                .join('');
+            autocompleteContainer.classList.remove('hidden');
+    
+            // Add click listener for each match
+            autocompleteContainer.querySelectorAll('li').forEach(item => {
+                item.addEventListener('click', () => {
+                    const currentTags = input.value.split(',').map(tag => tag.trim());
+                    const selectedTag = item.textContent;
+    
+                    // Replace the last incomplete word with the selected tag
+                    const lastWordIndex = currentTags.findIndex(tag => tag.toLowerCase().includes(searchText));
+                    if (lastWordIndex !== -1) {
+                        currentTags[lastWordIndex] = selectedTag;
+                    } else {
+                        currentTags.push(selectedTag);
+                    }
+    
+                    // Update the input and clear the dropdown
+                    input.value = currentTags.filter(Boolean).join(', ');
+                    autocompleteContainer.innerHTML = '';
+                    autocompleteContainer.classList.add('hidden');
+                });
+            });
+        });
+    
+        // Hide the dropdown if the user clicks outside
+        document.addEventListener('click', (event) => {
+            if (!input.contains(event.target) && !autocompleteContainer.contains(event.target)) {
+                autocompleteContainer.classList.add('hidden');
+            }
+        });
+    });
+
     // Auto-fill tags input with words from the file name
     document.querySelectorAll('.magic-wand-btn').forEach(button => {
         button.addEventListener('click', (event) => {
