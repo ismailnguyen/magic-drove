@@ -250,36 +250,43 @@
         if (element) element.scrollIntoView({ behavior: 'smooth' });
     }
 
+    async function editFilename(fileName, callback) {
+        const newFileName = prompt(`Enter the new name for the file "${fileName}":`, fileName);
+
+        if (newFileName && newFileName.trim() !== '' && newFileName !== fileName) {
+            try {
+                const response = await fetch('/rename-file', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ oldFileName: fileName, newFileName: newFileName.trim() }),
+                });
+                const data = await response.json();
+                if (data.success) {
+                    callback(newFileName);
+                } else {
+                    showToast(data.message || 'Failed to rename the file.');
+                }
+            }
+            catch(err) {
+                console.error('Error:', err);
+                showToast('An error occurred while renaming the file.', 'error');
+            }
+        }
+    }
+
     // Handle editing the file name
     document.querySelectorAll('.edit-filename').forEach(link => {
         link.addEventListener('click', async (event) => {
             event.preventDefault();
             const fileName = event.target.closest('a').getAttribute('data-file');
-            const newFileName = prompt(`Enter the new name for the file "${fileName}":`, fileName);
 
-            if (newFileName && newFileName.trim() !== '' && newFileName !== fileName) {
-                try {
-                    const response = await fetch('/rename-file', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ oldFileName: fileName, newFileName: newFileName.trim() }),
-                    });
-                    const data = await response.json();
-                    if (data.success) {
-                        // Refresh page and scroll to the updated file
-                        window.location.hash = `file-${newFileName.replace(/\W/g, '_')}`;
-                        window.location.reload();
-                    } else {
-                        showToast(data.message || 'Failed to rename the file.');
-                    }
-                }
-                catch(err) {
-                    console.error('Error:', err);
-                    showToast('An error occurred while renaming the file.', 'error');
-                }
-            }
+            await editFilename(fileName, (newFileName) => {
+                // Refresh page and scroll to the updated file
+                window.location.hash = `file-${newFileName.replace(/\W/g, '_')}`;
+                window.location.reload();
+            });
         });
     });
     
