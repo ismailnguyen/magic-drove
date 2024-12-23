@@ -140,6 +140,12 @@
     // Function to generate tags using the Magic Wand
     async function generateTags(fileName, inputField, callback) {
         if (!fileName) return;
+
+        // Save the original placeholder to restore later
+        const originalPlaceholder = inputField.placeholder;
+
+        // Update the placeholder to indicate loading
+        inputField.placeholder = 'Loading tags...';
     
         // Extract base words from the file name (by splitting filename by underscores (_) and spaces)
         const baseName = fileName.split('.').slice(0, -1).join('.'); // Remove extension
@@ -174,6 +180,11 @@
                 const currentTags = inputField.value.split(',').map(tag => tag.trim()).filter(Boolean);
                 const updatedTags = [...new Set([...currentTags, ...matchingTags])]; // Avoid duplicates
                 inputField.value = updatedTags.join(', '); // Ensure proper comma-separated format
+
+                // Call the callback after tags are updated
+                if (callback) {
+                    callback(updatedTags);
+                }
             } else {
                 showToast('No matching folders found for the magic wand.', 'error');
             }
@@ -182,10 +193,8 @@
             showToast('An error occurred while using the magic wand.', 'error');
         }
 
-        // Call the callback after tags are updated
-        if (callback) {
-            callback();
-        }
+        // Restore the original placeholder
+        inputField.placeholder = originalPlaceholder;
     }
 
     // Auto-fill tags input with words from the file name
@@ -225,21 +234,21 @@
 
     // Handle editing the file name
     document.querySelectorAll('.edit-filename').forEach(link => {
-        link.addEventListener('click', (event) => {
+        link.addEventListener('click', async (event) => {
             event.preventDefault();
             const fileName = event.target.closest('a').getAttribute('data-file');
             const newFileName = prompt(`Enter the new name for the file "${fileName}":`, fileName);
 
             if (newFileName && newFileName.trim() !== '' && newFileName !== fileName) {
-                fetch('/rename-file', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ oldFileName: fileName, newFileName: newFileName.trim() }),
-                })
-                .then(response => response.json())
-                .then(data => {
+                try {
+                    const response = await fetch('/rename-file', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ oldFileName: fileName, newFileName: newFileName.trim() }),
+                    });
+                    const data = await response.json();
                     if (data.success) {
                         // Refresh page and scroll to the updated file
                         window.location.hash = `file-${newFileName.replace(/\W/g, '_')}`;
@@ -247,154 +256,153 @@
                     } else {
                         showToast(data.message || 'Failed to rename the file.');
                     }
-                })
-                .catch(err => {
+                }
+                catch(err) {
                     console.error('Error:', err);
                     showToast('An error occurred while renaming the file.', 'error');
-                });
+                }
             }
         });
     });
     
-    document.querySelectorAll('.find-folders-btn').forEach(button => {
-        button.addEventListener('click', async (event) => {
-            const fileName = event.target.getAttribute('data-file');
-            const inputField = document.querySelector(`.tags-input[data-file="${fileName}"]`);
-            const inputContainer = inputField.closest('.tags-container'); // Adjust the whole container
-            const tagsCell = inputField.closest('td'); // Tags cell container
-            const matchingFoldersElement = document.querySelector(`.matching-folders[data-file="${fileName}"]`);
-            const fileNameCell = document.querySelector(`td[data-file="${fileName}"]`);
-            const magicWandButton = document.querySelector(`.magic-wand-btn[data-file="${fileName}"]`);
-    
-            if (!inputField.value.trim()) {
-                // Show a toast and trigger the magic wand
-                showToast('Tags are empty. Automatically generating tags...', 'info');
-    
-                // Trigger Magic Wand to fill tags input
-                magicWandButton.click();
-    
-                // Wait for the Magic Wand to complete its operation
-                await new Promise((resolve) => setTimeout(resolve, 500)); // Small delay to ensure tags are filled
-            }
-
-            const tags = inputField.value
-                .split(',')
-                .map(tag => tag.trim().toLowerCase()) // Normalize tags to lowercase
-                .filter(tag => tag);
-    
-            if (tags.length === 0) {
-                showToast('Failed to generate tags automatically. Please check the filename.', 'error');
-                return;
-            }
-    
-            // Add a loading placeholder
-            matchingFoldersElement.innerHTML = '<div class="text-gray-500">Looking for best matching folders...</div>';
+    // Function to find folders based on tags
+    async function findFolders(fileName, tags, inputField, matchingFoldersElement, fileNameCell, tagsCell) {
+        // Add a loading placeholder
+        matchingFoldersElement.innerHTML = '<div class="text-gray-500">Looking for best matching folders...</div>';
             
-            // Move the file name, tags input, and magic wand button to the top
-            fileNameCell.style.verticalAlign = 'top';
-            tagsCell.style.verticalAlign = 'top';
+        // Move the file name, tags input, and magic wand button to the top
+        fileNameCell.style.verticalAlign = 'top';
+        tagsCell.style.verticalAlign = 'top';
 
-            fetch(`/match-folders`, {
+        try {
+            const response = await fetch(`/match-folders`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({ fileName, tags }),
-            })
-            .then(response => response.json())
-            .then(data => {
-                matchingFoldersElement.innerHTML = ''; // Clear previous matches
+            });
 
-                if (data.success && data.folders.length > 0) {
-                    data.folders.forEach(folder => {
-                        const li = document.createElement('li');
+            const data = await response.json();
+    
+            matchingFoldersElement.innerHTML = ''; // Clear previous matches
 
-                        // Highlight folders in the path based on full or partial matches with tags longer than 2 characters
-                        const highlightedPath = folder.split('/').map(part => {
-                            const lowerPart = part.toLowerCase();
+            if (data.success && data.folders.length > 0) {
+                data.folders.forEach(folder => {
+                    const li = document.createElement('li');
 
-                            // Filter tags specifically for highlighting
-                            const highlightTags = tags.filter(tag => tag.length > 2);
+                    // Highlight folders in the path based on full or partial matches with tags longer than 2 characters
+                    const highlightedPath = folder.split('/').map(part => {
+                        const lowerPart = part.toLowerCase();
 
-                            // Check if any highlight-eligible tag matches fully or partially
-                            const isMatch = highlightTags.some(tag => {
-                                const normalizedTag = tag.replace(/[-_\s]+/g, ''); // Normalize tags
-                                const normalizedPart = lowerPart.replace(/[-_\s]+/g, ''); // Normalize folder names
-                                return normalizedPart.includes(normalizedTag);
-                            });
+                        // Filter tags specifically for highlighting
+                        const highlightTags = tags.filter(tag => tag.length > 2);
 
-                            // Highlight the folder if it matches
-                            if (isMatch) {
-                                return `<span class="bg-yellow-200 font-bold">${part}</span>`;
-                            }
-                            return part;
-                        }).join('/');
-
-                        li.innerHTML = highlightedPath;
-
-                        // Add folder name
-                        const folderNameSpan = document.createElement('span');
-                        folderNameSpan.textContent = folder;
-
-                        // Add "Copy Path" link for the folder
-                        const copyFolderPathLink = document.createElement('a');
-                        copyFolderPathLink.href = '#';
-                        copyFolderPathLink.innerHTML = '<i class="fas fa-copy text-blue-500 hover:text-blue-700 ml-4"></i>';
-                        copyFolderPathLink.addEventListener('click', (e) => {
-                            e.preventDefault();
-                            navigator.clipboard.writeText(folder)
-                                .then(() => {
-                                    showToast(`Folder path "${folder}" copied to clipboard.`);
-                                })
-                                .catch(err => {
-                                    console.error('Error copying to clipboard:', err);
-                                    showToast('Failed to copy the folder path to clipboard.');
-                                });
+                        // Check if any highlight-eligible tag matches fully or partially
+                        const isMatch = highlightTags.some(tag => {
+                            const normalizedTag = tag.replace(/[-_\s]+/g, ''); // Normalize tags
+                            const normalizedPart = lowerPart.replace(/[-_\s]+/g, ''); // Normalize folder names
+                            return normalizedPart.includes(normalizedTag);
                         });
 
-                        // Add "Move File" link
-                        const moveLink = document.createElement('a');
-                        moveLink.href = '#';
-                        moveLink.innerHTML = '<i class="fas fa-folder-open"></i>';
-                        moveLink.className = 'text-blue-500 hover:text-blue-700 ml-4';
-                        moveLink.addEventListener('click', (e) => {
-                            e.preventDefault();
-                            fetch(`/move-file`, {
+                        // Highlight the folder if it matches
+                        if (isMatch) {
+                            return `<span class="bg-yellow-200 font-bold">${part}</span>`;
+                        }
+                        return part;
+                    }).join('/');
+
+                    li.innerHTML = highlightedPath;
+
+                    // Add folder name
+                    const folderNameSpan = document.createElement('span');
+                    folderNameSpan.textContent = folder;
+
+                    // Add "Copy Path" link for the folder
+                    const copyFolderPathLink = document.createElement('a');
+                    copyFolderPathLink.href = '#';
+                    copyFolderPathLink.innerHTML = '<i class="fas fa-copy text-blue-500 hover:text-blue-700 ml-4"></i>';
+                    copyFolderPathLink.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        navigator.clipboard.writeText(folder)
+                            .then(() => {
+                                showToast(`Folder path "${folder}" copied to clipboard.`);
+                            })
+                            .catch(err => {
+                                console.error('Error copying to clipboard:', err);
+                                showToast('Failed to copy the folder path to clipboard.');
+                            });
+                    });
+
+                    // Add "Move File" link
+                    const moveLink = document.createElement('a');
+                    moveLink.href = '#';
+                    moveLink.innerHTML = '<i class="fas fa-folder-open"></i>';
+                    moveLink.className = 'text-blue-500 hover:text-blue-700 ml-4';
+                    moveLink.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        try {
+                            const moveResponse = fetch(`/move-file`, {
                                 method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json',
                                 },
                                 body: JSON.stringify({ fileName, destination: folder }),
-                            })
-                            .then(moveResponse => moveResponse.json())
-                            .then(moveData => {
-                                if (moveData.success) {
-                                    showToast(`File "${fileName}" moved to "${folder}" successfully.`);
-                                    window.location.reload(); // Refresh the page after success
-                                } else {
-                                    showToast(`Failed to move file "${fileName}" to "${folder}".`);
-                                }
-                            })
-                            .catch(err => {
-                                console.error('Error:', err);
-                                showToast('An error occurred while moving the file.');
                             });
-                        });
 
-                        li.appendChild(copyFolderPathLink);
-                        li.appendChild(moveLink);
-                        matchingFoldersElement.appendChild(li);
+                            const moveData = moveResponse.json();
+
+                            if (moveData.success) {
+                                showToast(`File "${fileName}" moved to "${folder}" successfully.`);
+                                window.location.reload(); // Refresh the page after success
+                            } else {
+                                showToast(`Failed to move file "${fileName}" to "${folder}".`);
+                            }
+                        }
+                        catch(err) {
+                            console.error('Error:', err);
+                            showToast('An error occurred while moving the file.');
+                        }
                     });
-                } else {
-                    const li = document.createElement('li');
-                    li.textContent = 'No matching folders found.';
+
+                    li.appendChild(copyFolderPathLink);
+                    li.appendChild(moveLink);
                     matchingFoldersElement.appendChild(li);
-                }
-            })
-            .catch(err => {
-                console.error('Error:', err);
-                matchingFoldersElement.innerHTML = '<div class="text-red-500">An error occurred. Please try again.</div>';
-            });
+                });
+            } else {
+                const li = document.createElement('li');
+                li.textContent = 'No matching folders found.';
+                matchingFoldersElement.appendChild(li);
+            }
+        }
+        catch(err) {
+            console.error('Error:', err);
+            matchingFoldersElement.innerHTML = '<div class="text-red-500">An error occurred. Please try again.</div>';
+        }
+    }
+
+    document.querySelectorAll('.find-folders-btn').forEach(button => {
+        button.addEventListener('click', async (event) => {
+            const fileName = event.target.getAttribute('data-file');
+            const inputField = document.querySelector(`.tags-input[data-file="${fileName}"]`);
+            const matchingFoldersElement = document.querySelector(`.matching-folders[data-file="${fileName}"]`);
+            const fileNameCell = document.querySelector(`td[data-file="${fileName}"]`);
+            const tagsCell = inputField.closest('td'); // Tags cell container
+    
+            // If the tags input is empty, generate tags first
+            if (!inputField.value.trim()) {
+                showToast('Tags are empty. Automatically generating tags...', 'info');
+                await generateTags(fileName, inputField, async (foundTags) => {
+                    await findFolders(fileName, foundTags, inputField, matchingFoldersElement, fileNameCell, tagsCell);
+                });
+            } else {
+                const tags = inputField.value
+                        .split(',')
+                        .map(tag => tag.trim().toLowerCase()) // Normalize tags to lowercase
+                        .filter(tag => tag); // Keep all tags for general operations
+
+                await findFolders(fileName, tags, inputField, matchingFoldersElement, fileNameCell, tagsCell);
+            }
         });
     });
 </script>
