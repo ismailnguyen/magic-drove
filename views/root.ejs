@@ -137,6 +137,57 @@
         });
     });
 
+    // Function to generate tags using the Magic Wand
+    async function generateTags(fileName, inputField, callback) {
+        if (!fileName) return;
+    
+        // Extract base words from the file name (by splitting filename by underscores (_) and spaces)
+        const baseName = fileName.split('.').slice(0, -1).join('.'); // Remove extension
+        const parts = baseName.split(/[_\s]+/).map(part => {
+            if (/^\d{8}$/.test(part)) {
+                return part.slice(0, 4); // Extract year from YYYYMMDD
+            }
+            return part;
+        });
+
+        try {
+            // Send the extracted parts as tags to match folders
+            const response = await fetch('/match-folders', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ fileName, tags: parts }),
+            });
+            const data = await response.json();
+
+            if (data.success && data.folders.length > 0) {
+                // Collect all folder paths
+                const folderPaths = data.folders.map(folder => folder.toLowerCase());
+
+                // Filter parts that match any folder path
+                const matchingTags = parts.filter(part =>
+                    folderPaths.some(folderPath => folderPath.includes(part.toLowerCase()))
+                );
+
+                // Update the tags input
+                const currentTags = inputField.value.split(',').map(tag => tag.trim()).filter(Boolean);
+                const updatedTags = [...new Set([...currentTags, ...matchingTags])]; // Avoid duplicates
+                inputField.value = updatedTags.join(', '); // Ensure proper comma-separated format
+            } else {
+                showToast('No matching folders found for the magic wand.', 'error');
+            }
+        } catch (error) {
+            console.error('Error fetching matching folders:', error);
+            showToast('An error occurred while using the magic wand.', 'error');
+        }
+
+        // Call the callback after tags are updated
+        if (callback) {
+            callback();
+        }
+    }
+
     // Auto-fill tags input with words from the file name
     document.querySelectorAll('.magic-wand-btn').forEach(button => {
         button.addEventListener('click', async (event) => {
@@ -145,48 +196,7 @@
             const fileName = event.target.closest('button').getAttribute('data-file');
             const inputField = document.querySelector(`.tags-input[data-file="${fileName}"]`);
     
-            if (!fileName) return;
-    
-            // Extract base words from the file name (by splitting filename by underscores (_) and spaces)
-            const baseName = fileName.split('.').slice(0, -1).join('.'); // Remove extension
-            const parts = baseName.split(/[_\s]+/).map(part => {
-                if (/^\d{8}$/.test(part)) {
-                    return part.slice(0, 4); // Extract year from YYYYMMDD
-                }
-                return part;
-            });
-    
-            try {
-                // Send the extracted parts as tags to match folders
-                const response = await fetch('/match-folders', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ fileName, tags: parts }),
-                });
-                const data = await response.json();
-
-                if (data.success && data.folders.length > 0) {
-                    // Collect all folder paths
-                    const folderPaths = data.folders.map(folder => folder.toLowerCase());
-
-                    // Filter parts that match any folder path
-                    const matchingTags = parts.filter(part =>
-                        folderPaths.some(folderPath => folderPath.includes(part.toLowerCase()))
-                    );
-
-                    // Update the tags input
-                    const currentTags = inputField.value.split(',').map(tag => tag.trim()).filter(Boolean);
-                    const updatedTags = [...new Set([...currentTags, ...matchingTags])]; // Avoid duplicates
-                    inputField.value = updatedTags.join(', '); // Ensure proper comma-separated format
-                } else {
-                    showToast('No matching folders found for the magic wand.', 'error');
-                }
-            } catch (error) {
-                console.error('Error fetching matching folders:', error);
-                showToast('An error occurred while using the magic wand.', 'error');
-            }
+            await generateTags(fileName, inputField, null);
         });
     });
 
@@ -247,21 +257,33 @@
     });
     
     document.querySelectorAll('.find-folders-btn').forEach(button => {
-        button.addEventListener('click', (event) => {
+        button.addEventListener('click', async (event) => {
             const fileName = event.target.getAttribute('data-file');
             const inputField = document.querySelector(`.tags-input[data-file="${fileName}"]`);
             const inputContainer = inputField.closest('.tags-container'); // Adjust the whole container
             const tagsCell = inputField.closest('td'); // Tags cell container
             const matchingFoldersElement = document.querySelector(`.matching-folders[data-file="${fileName}"]`);
             const fileNameCell = document.querySelector(`td[data-file="${fileName}"]`);
+            const magicWandButton = document.querySelector(`.magic-wand-btn[data-file="${fileName}"]`);
     
+            if (!inputField.value.trim()) {
+                // Show a toast and trigger the magic wand
+                showToast('Tags are empty. Automatically generating tags...', 'info');
+    
+                // Trigger Magic Wand to fill tags input
+                magicWandButton.click();
+    
+                // Wait for the Magic Wand to complete its operation
+                await new Promise((resolve) => setTimeout(resolve, 500)); // Small delay to ensure tags are filled
+            }
+
             const tags = inputField.value
                 .split(',')
                 .map(tag => tag.trim().toLowerCase()) // Normalize tags to lowercase
                 .filter(tag => tag);
     
             if (tags.length === 0) {
-                showToast('Please enter at least one tag.', 'error');
+                showToast('Failed to generate tags automatically. Please check the filename.', 'error');
                 return;
             }
     
