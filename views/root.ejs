@@ -26,11 +26,12 @@
                 </td>
                 <td class="border border-gray-300 px-4 py-2 relative">
                     <div class="flex items-center">
-                        <input 
-                            type="text" 
-                            class="tags-input w-full border border-gray-300 px-2 py-1 rounded" 
-                            placeholder="Add tags separated by commas" 
-                            data-file="<%= file.fileName %>">
+                        <textarea 
+                            class="tags-input w-full border border-gray-300 px-2 py-1 rounded resize-none" 
+                            placeholder="Add tags, separated by column" 
+                            data-file="<%= file.fileName %>" 
+                            rows="2"
+                        ></textarea>
                         <button 
                             class="magic-wand-btn text-blue-500 hover:text-blue-700 ml-2"
                             data-file="<%= file.fileName %>">
@@ -53,6 +54,23 @@
 </table>
 
 <script>
+    function handleTagsInput(inputField, callback) {
+        const tags = inputField.value
+            .split(/[,\n]+/) // Split by comma or newline
+            .map(tag => tag.trim())
+            .filter(tag => tag); // Filter out empty tags
+    
+        if (callback) {
+            callback(tags);
+        }
+    }
+
+    document.querySelectorAll('.tags-input').forEach(inputField => {
+        inputField.addEventListener('input', (event) => {
+            handleTagsInput(inputField, null);
+        });
+    });
+
     document.querySelectorAll('.tags-input').forEach(input => {
         const measureSpan = document.createElement('span'); // Hidden span to measure text width
         measureSpan.style.position = 'absolute';
@@ -391,7 +409,7 @@
     
             // If the tags input is empty, generate tags first
             if (!inputField.value.trim()) {
-                showToast('Tags are empty. Automatically generating tags...', 'info');
+                showToast('Automatically generating tags...', 'info');
                 await generateTags(fileName, inputField, async (foundTags) => {
                     await findFolders(fileName, foundTags, inputField, matchingFoldersElement, fileNameCell, tagsCell);
                 });

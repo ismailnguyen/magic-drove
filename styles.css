@@ -9,3 +9,10 @@
     top: 100%;
     left: 0;
 }
+
+.tags-input {
+    overflow-y: auto; /* Allow vertical scrolling if content exceeds the height */
+    height: auto;     /* Adjust height dynamically */
+    min-height: 50px; /* Ensure enough space for up to 5 words */
+    max-height: 100px; /* Limit maximum height for better UI */
+}
