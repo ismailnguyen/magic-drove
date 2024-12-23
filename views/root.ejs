@@ -89,8 +89,8 @@
                 return;
             }
     
-            // Extract base words from the file name (same logic as the magic wand)
-            const baseName = fileName.split('.').slice(0, -1).join('.');
+            // Extract base words from the file name (by splitting filename by underscores (_) and spaces)
+            const baseName = fileName.split('.').slice(0, -1).join('.'); // Remove extension
             const parts = baseName.split(/[_\s]+/).map(part => {
                 if (/^\d{8}$/.test(part)) {
                     return part.slice(0, 4); // Extract year from YYYYMMDD
@@ -147,7 +147,7 @@
     
             if (!fileName) return;
     
-            // Extract base words from the file name
+            // Extract base words from the file name (by splitting filename by underscores (_) and spaces)
             const baseName = fileName.split('.').slice(0, -1).join('.'); // Remove extension
             const parts = baseName.split(/[_\s]+/).map(part => {
                 if (/^\d{8}$/.test(part)) {
@@ -250,23 +250,27 @@
         button.addEventListener('click', (event) => {
             const fileName = event.target.getAttribute('data-file');
             const inputField = document.querySelector(`.tags-input[data-file="${fileName}"]`);
+            const inputContainer = inputField.closest('.tags-container'); // Adjust the whole container
+            const tagsCell = inputField.closest('td'); // Tags cell container
+            const matchingFoldersElement = document.querySelector(`.matching-folders[data-file="${fileName}"]`);
+            const fileNameCell = document.querySelector(`td[data-file="${fileName}"]`);
+    
             const tags = inputField.value
-            .split(',')
-            .map(tag => tag.trim().toLowerCase()) // Normalize tags to lowercase
-            .filter(tag => tag);
-
+                .split(',')
+                .map(tag => tag.trim().toLowerCase()) // Normalize tags to lowercase
+                .filter(tag => tag);
+    
             if (tags.length === 0) {
                 showToast('Please enter at least one tag.', 'error');
                 return;
             }
-
-            const matchingFoldersElement = document.querySelector(`.matching-folders[data-file="${fileName}"]`);
-            const fileNameCell = document.querySelector(`td[data-file="${fileName}"]`);
-
+    
             // Add a loading placeholder
             matchingFoldersElement.innerHTML = '<div class="text-gray-500">Looking for best matching folders...</div>';
-            // Float the file name to the top
+            
+            // Move the file name, tags input, and magic wand button to the top
             fileNameCell.style.verticalAlign = 'top';
+            tagsCell.style.verticalAlign = 'top';
 
             fetch(`/match-folders`, {
                 method: 'POST',
@@ -283,12 +287,22 @@
                     data.folders.forEach(folder => {
                         const li = document.createElement('li');
 
-                        // Highlight matching parts of the folder path (partial and case-insensitive)
+                        // Highlight folders in the path based on full or partial matches with tags longer than 2 characters
                         const highlightedPath = folder.split('/').map(part => {
                             const lowerPart = part.toLowerCase();
-                            const isMatch = tags.some(tag => lowerPart.includes(tag)); // Check for partial match
+
+                            // Filter tags specifically for highlighting
+                            const highlightTags = tags.filter(tag => tag.length > 2);
+
+                            // Check if any highlight-eligible tag matches fully or partially
+                            const isMatch = highlightTags.some(tag => {
+                                const normalizedTag = tag.replace(/[-_\s]+/g, ''); // Normalize tags
+                                const normalizedPart = lowerPart.replace(/[-_\s]+/g, ''); // Normalize folder names
+                                return normalizedPart.includes(normalizedTag);
+                            });
+
+                            // Highlight the folder if it matches
                             if (isMatch) {
-                                // Highlight matching folder names
                                 return `<span class="bg-yellow-200 font-bold">${part}</span>`;
                             }
                             return part;
