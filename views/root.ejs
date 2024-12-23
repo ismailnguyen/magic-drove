@@ -227,19 +227,28 @@
         });
     });
 
+    function copyFilePath(filePath, successCallback) {
+        navigator.clipboard.writeText(filePath)
+        .then(() => {
+            successCallback(`File path "${filePath}" copied to clipboard.`);
+        })
+        .catch(err => {
+            throw new Error('Failed to copy the file path to clipboard.');
+        });
+    }
+
     // Copy file path to clipboard
     document.querySelectorAll('.copy-file-path').forEach(link => {
         link.addEventListener('click', (event) => {
             event.preventDefault();
             const filePath = event.target.closest('a').getAttribute('data-file-path');
-            navigator.clipboard.writeText(filePath)
-                .then(() => {
-                    showToast(`File path "${filePath}" copied to clipboard.`);
-                })
-                .catch(err => {
-                    console.error('Error copying to clipboard:', err);
-                    showToast('Failed to copy the file path to clipboard.', 'error');
+            try {
+                copyFilePath(filePath, (message) => {
+                    showToast(message, 'success');
                 });
+            } catch (error) {
+                showToast(error, 'error');
+            }
         });
     });
 
