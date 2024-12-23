@@ -23,24 +23,34 @@
     </div>
     <script>
         // Function to display a toast notification
-        function showToast(message, type = 'success') {
-            const toastContainer = document.getElementById('toast-container');
+        function showToast(message, type = 'info') {
             const toast = document.createElement('div');
-
-            // Toast styles
-            toast.className = `px-4 py-2 rounded shadow-lg text-white ${
-                type === 'success' ? 'bg-green-500' : 'bg-red-500'
-            } transition-opacity duration-300 opacity-0`;
+            toast.className = `fixed bottom-4 right-4 px-4 py-2 rounded shadow-lg text-white transition-opacity opacity-0`;
+        
+            if (type === 'info') {
+                toast.classList.add('bg-blue-500');
+            } else if (type === 'error') {
+                toast.classList.add('bg-red-500');
+            } else if (type === 'success') {
+                toast.classList.add('bg-green-500');
+            } else if (type === 'warning') {
+                toast.classList.add('bg-orange-500');
+            }
+        
             toast.textContent = message;
-
-            // Append and show the toast
-            toastContainer.appendChild(toast);
-            setTimeout(() => (toast.style.opacity = '1'), 10);
-
+            document.body.appendChild(toast);
+        
+            // Fade in the toast
+            setTimeout(() => {
+                toast.style.opacity = '1';
+            }, 100);
+        
             // Remove the toast after 3 seconds
             setTimeout(() => {
                 toast.style.opacity = '0';
-                setTimeout(() => toast.remove(), 300);
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
             }, 3000);
         }
     </script>
