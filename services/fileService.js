@@ -53,10 +53,11 @@ const listFoldersRecursive = (folder) => {
     try {
         const items = fs.readdirSync(folder);
 
+        // get for each folder its name, path and file count
         items.forEach((item) => {
             const fullPath = path.join(folder, item);
             if (fs.lstatSync(fullPath).isDirectory()) {
-                folders.push({ folderName: item, folderPath: fullPath });
+                folders.push({ folderName: item, folderPath: fullPath, fileCount: fs.readdirSync(fullPath).length });
                 folders.push(...listFoldersRecursive(fullPath));
             }
         });

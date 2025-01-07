@@ -4,6 +4,7 @@
         <tr class="bg-gray-100">
             <th class="border border-gray-300 px-4 py-2">Folder Name</th>
             <th class="border border-gray-300 px-4 py-2">Folder Path</th>
+            <th class="border border-gray-300 px-4 py-2">File count</th>
         </tr>
     </thead>
     <tbody>
@@ -11,6 +12,7 @@
             <tr class="odd:bg-white even:bg-gray-50">
                 <td class="border border-gray-300 px-4 py-2"><%= folder.folderName %></td>
                 <td class="border border-gray-300 px-4 py-2"><%= folder.folderPath %></td>
+                <td class="border border-gray-300 px-4 py-2"><%= folder.fileCount %></td>
             </tr>
         <% }); %>
     </tbody>
