@@ -179,10 +179,10 @@ export async function findFolders(fileName, tags, inputField, matchingFoldersEle
                 moveLink.href = '#';
                 moveLink.innerHTML = '<i class="fas fa-folder-open"></i>';
                 moveLink.className = 'text-blue-500 hover:text-blue-700 ml-4';
-                moveLink.addEventListener('click', (e) => {
+                moveLink.addEventListener('click', async (e) => {
                     e.preventDefault();
                     try {
-                        const moveResponse = fetch(`/move-file`, {
+                        const moveResponse = await fetch(`/move-file`, {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
