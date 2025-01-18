@@ -38,6 +38,13 @@ router.get('/folders', (req, res) => {
     res.render('folders', { title: 'Folders and Subfolders', rootFolder, folders });
 });
 
+// Route: Dashboard
+router.get('/dashboard', (req, res) => {
+    const folders = listFoldersRecursive(rootFolder);
+    res.render('folders', { title: 'Folders and Subfolders', rootFolder, folders });
+});
+
+
 // Route: Download CSV for all files
 router.get('/download', (req, res) => {
     const allFiles = listFilesRecursive(rootFolder);

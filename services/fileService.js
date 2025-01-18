@@ -111,8 +111,14 @@ const moveFile = (rootFolder, fileName, destination) => {
         throw new Error('Source file does not exist.');
     }
 
+    // If destination folder does not exist, create it
     if (!fs.existsSync(destination)) {
-        throw new Error('Destination folder does not exist.');
+        try {
+            fs.mkdirSync(destination, { recursive: true });
+        } catch (err) {
+            console.error(`Error creating destination folder "${destination}":`, err);
+            throw new Error('Failed to create the destination folder.');
+        }
     }
 
     try {

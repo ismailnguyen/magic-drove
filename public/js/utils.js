@@ -166,11 +166,11 @@ export async function findFolders(fileName, tags, inputField, matchingFoldersEle
                     e.preventDefault();
                     navigator.clipboard.writeText(folder)
                         .then(() => {
-                            showToast(`Folder path "${folder}" copied to clipboard.`);
+                            showToast(`Folder path "${folder}" copied to clipboard.`, 'success');
                         })
                         .catch(err => {
                             console.error('Error copying to clipboard:', err);
-                            showToast('Failed to copy the folder path to clipboard.');
+                            showToast('Failed to copy the folder path to clipboard.', 'error');
                         });
                 });
 
@@ -181,27 +181,31 @@ export async function findFolders(fileName, tags, inputField, matchingFoldersEle
                 moveLink.className = 'text-blue-500 hover:text-blue-700 ml-4';
                 moveLink.addEventListener('click', async (e) => {
                     e.preventDefault();
+
+                    const newFolderPath = prompt(`Confirm the folder path to move to:`, folder);
                     try {
                         const moveResponse = await fetch(`/move-file`, {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
                             },
-                            body: JSON.stringify({ fileName, destination: folder }),
+                            body: JSON.stringify({ fileName, destination: newFolderPath }),
                         });
 
-                        const moveData = moveResponse.json();
+                        const moveData = await moveResponse.json();
 
                         if (moveData.success) {
-                            showToast(`File "${fileName}" moved to "${folder}" successfully.`);
-                            window.location.reload(); // Refresh the page after success
+                            showToast(`File "${fileName}" moved to "${newFolderPath}" successfully.`, 'success');
+                            setTimeout(() => {
+                                window.location.reload(); // Refresh the page after success
+                            }, 1000);
                         } else {
-                            showToast(`Failed to move file "${fileName}" to "${folder}".`);
+                            showToast(`Failed to move file "${fileName}" to "${newFolderPath}".`, 'error');
                         }
                     }
                     catch(err) {
                         console.error('Error:', err);
-                        showToast('An error occurred while moving the file.');
+                        showToast('An error occurred while moving the file.', 'error');
                     }
                 });
 
